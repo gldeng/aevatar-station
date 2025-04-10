@@ -11,9 +11,16 @@
         <PackageReference Include="Microsoft.Orleans.Sdk" />
         <PackageReference Include="AElf.OpenTelemetry" />
         <PackageReference Include="Volo.Abp.Ddd.Domain" />
+        <PackageReference Include="Aevatar.SignalR" />
+        <PackageReference Include="Microsoft.Orleans.Core.Abstractions" />
+        <PackageReference Include="Microsoft.Orleans.Streaming" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Aevatar.Domain.Shared\Aevatar.Domain.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="SignalR\" />
     </ItemGroup>
 </Project>

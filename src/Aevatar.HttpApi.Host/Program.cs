@@ -31,7 +31,9 @@ public class Program
                 .ConfigureDefaults(args)
                 .UseAutofac()
                 .UseSerilog();
-            builder.Services.AddSignalR(options => { options.EnableDetailedErrors = true; }).AddOrleans();
+            // builder.Services
+            //     .AddSignalR(options => { options.EnableDetailedErrors = true; })
+            //     .AddOrleans();
             builder.Services
                 .AddSingleton<IAuthorizationMiddlewareResultHandler, AevatarAuthorizationMiddlewareResultHandler>();
             await builder.AddApplicationAsync<AevatarHttpApiHostModule>();
@@ -70,6 +72,7 @@ public class Program
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
+            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
     }
 }

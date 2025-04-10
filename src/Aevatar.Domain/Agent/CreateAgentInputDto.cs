@@ -10,3 +10,8 @@ public class CreateAgentInputDto
     public string Name { get; set; }
     public Dictionary<string, object>? Properties { get; set; }
 }
+
+public class DummyDto
+{
+    public string Echo { get; set; }
+}

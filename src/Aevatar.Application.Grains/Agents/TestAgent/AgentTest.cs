@@ -8,6 +8,12 @@ using Orleans.Providers;
 
 namespace Aevatar.Application.Grains.Agents.TestAgent;
 
+[GenerateSerializer]
+public class TestRequest : EventBase
+{
+    [Id(0)] public string Details { get; set; }
+}
+
 [Description("AgentTest")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
@@ -36,6 +42,12 @@ public class AgentTest : GAgentBase<FrontAgentState, FrontTestEvent, EventBase>,
         await ConfirmEvents();
     }
 
+    [EventHandler]
+    public async Task HandleTestRequest(TestRequest request)
+    {
+        Console.WriteLine($"received request: {request.Details}");
+    }
+    
     [EventHandler]
     public async Task HandleFrontTestCreateEvent(FrontTestCreateEvent @event)
     {

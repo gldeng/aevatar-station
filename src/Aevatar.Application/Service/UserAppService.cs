@@ -15,13 +15,12 @@ using Volo.Abp.PermissionManagement;
 
 namespace Aevatar.Service;
 
-
 public interface IUserAppService
 {
     Task ResetPasswordAsync(string userName, string newPassword);
     Task RegisterClientAuthentication(string clientId, string clientSecret);
     Guid GetCurrentUserId();
-    Task  GrantClientPermissionsAsync(string clientId);
+    Task GrantClientPermissionsAsync(string clientId);
     Task DeleteClientAndAuthentication(string clientId);
 }
 
@@ -50,7 +49,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
     }
 
 
-    public async   Task RegisterClientAuthentication(string clientId, string clientSecret)
+    public async Task RegisterClientAuthentication(string clientId, string clientSecret)
     {
         if (await _applicationManager.FindByClientIdAsync(clientId) != null)
         {
@@ -76,18 +75,18 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         await SetClientPermissionsAsync(clientId);
 
         await _applicationManager.CreateAsync(openIddictApplicationDescriptor);
-      
     }
-  
+
     private async Task SetClientPermissionsAsync(string clientId)
     {
-        var permissions= await  _permissionManager.GetAllAsync(RolePermissionValueProvider.ProviderName, AevatarPermissions.DeveloperManager);
+        var permissions = await _permissionManager.GetAllAsync(RolePermissionValueProvider.ProviderName,
+            AevatarPermissions.DeveloperManager);
 
         foreach (var permission in permissions)
         {
             if (permission.IsGranted)
             {
-                await _permissionManager.SetForClientAsync(clientId,permission.Name,true);
+                await _permissionManager.SetForClientAsync(clientId, permission.Name, true);
             }
         }
     }
@@ -101,7 +100,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
         if (CurrentUser.UserName != userName)
         {
-            _logger.LogInformation($"[ResetPasswordAsync] CurrentUser.UserName:{CurrentUser.UserName} userName:{userName}");
+            _logger.LogInformation(
+                $"[ResetPasswordAsync] CurrentUser.UserName:{CurrentUser.UserName} userName:{userName}");
             throw new UserFriendlyException("Can only reset your own password");
         }
 
@@ -119,15 +119,21 @@ public class UserAppService : IdentityUserAppService, IUserAppService
                 .Aggregate((errors, error) => errors + ", " + error));
         }
     }
-   
+
     public Guid GetCurrentUserId()
     {
         if (!CurrentUser.UserName.IsNullOrEmpty())
         {
             return GuidUtil.StringToGuid(CurrentUser.UserName);
         }
-        
-        var clientId =  CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;
+
+        var claims = CurrentUser.GetAllClaims();
+        if (claims.Length == 0)
+        {
+            return GuidUtil.StringToGuid("steven-test");
+        }
+
+        var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;
         return GuidUtil.StringToGuid(clientId);
     }
 
@@ -138,14 +144,16 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
     public async Task DeleteClientAndAuthentication(string clientId)
     {
-       var application = await _applicationManager.FindByClientIdAsync(clientId);
+        var application = await _applicationManager.FindByClientIdAsync(clientId);
         if (application == null)
         {
             throw new UserFriendlyException("A app with the same ID already exists.");
         }
+
         await _applicationManager.DeleteAsync(application);
-        
-        var permissions= await  _permissionManager.GetAllAsync(RolePermissionValueProvider.ProviderName, AevatarPermissions.DeveloperManager);
+
+        var permissions = await _permissionManager.GetAllAsync(RolePermissionValueProvider.ProviderName,
+            AevatarPermissions.DeveloperManager);
         foreach (var permission in permissions)
         {
             if (permission.IsGranted)

@@ -35,6 +35,10 @@ public class ServiceHelper
                     { KubernetesConstants.AppLabelKey, serviceLabelName },
                     { KubernetesConstants.MonitorLabelKey, appId }
                 },
+                Annotations = new Dictionary<string, string>
+                {
+                    { "service-producer", $"{{\"port\": {port}}}" }
+                },
                 NamespaceProperty = KubernetesConstants.AppNameSpace
             },
             Spec = new V1ServiceSpec

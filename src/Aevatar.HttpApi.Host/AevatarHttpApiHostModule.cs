@@ -31,6 +31,7 @@ using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.Threading;
 using Volo.Abp.VirtualFileSystem;
+using Aevatar.SignalR.Core;
 
 namespace Aevatar;
 
@@ -72,9 +73,14 @@ public class AevatarHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
 
         context.Services.AddMvc(options => { options.Filters.Add(new IgnoreAntiforgeryTokenAttribute()); })
             .AddNewtonsoftJson();
-        
+
         context.Services.AddHealthChecks();
+        // context.Services.AddSingleton<IServerDirectoryGrain>((svc) =>
+        // {
+        //     return svc.GetService(typeof(ServerDirectoryGrain));
+        // });
     }
+
     private void ConfigureDataProtection(
         ServiceConfigurationContext context,
         IConfiguration configuration,
@@ -83,12 +89,11 @@ public class AevatarHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         var dataProtectionBuilder = context.Services.AddDataProtection().SetApplicationName("AevatarAuthServer");
     }
 
-    private void ConfigCache(ServiceConfigurationContext context,IConfiguration configuration)
+    private void ConfigCache(ServiceConfigurationContext context, IConfiguration configuration)
     {
         var redisOptions = ConfigurationOptions.Parse(configuration["Redis:Configuration"]);
         context.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(redisOptions));
         Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "Aevatar:"; });
-
     }
 
     private static void ConfigureAutoResponseWrapper(ServiceConfigurationContext context)
@@ -202,7 +207,7 @@ public class AevatarHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         app.UseCorrelationId();
         app.UseStaticFiles();
         app.UseRouting();
-        
+
         app.UseCors();
         app.UseAuthentication();
         app.UseAuthorization();

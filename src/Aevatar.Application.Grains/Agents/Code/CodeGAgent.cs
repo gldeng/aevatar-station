@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Aevatar.Application.Grains.Agents.TestAgent;
 using Aevatar.Code;
 using Aevatar.Code.GEvents;
 using Aevatar.Core;
@@ -8,13 +9,29 @@ using Orleans.Providers;
 
 namespace Aevatar.Application.Grains.Agents.Code;
 
+[GenerateSerializer]
+public class PingMessage : EventBase
+{
+    [Id(0)] public string Message { get; set; }
+}
+
 [Description("Handle Agent Combination")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
 public class CodeGAgent : GAgentBase<CodeGAgentState, CodeAgentGEvent>, ICodeGAgent
 {
-    public CodeGAgent(ILogger<CodeGAgent> logger) 
+    public CodeGAgent(ILogger<CodeGAgent> logger)
     {
+    }
+
+    [EventHandler]
+    public async Task HandlePingMessageAsync(PingMessage message)
+    {
+        await PublishAsync(new TestRequest()
+        {
+            Details = message.Message
+        });
+        Console.WriteLine($"received message: {message.Message}");
     }
 
     public override Task<string> GetDescriptionAsync()
@@ -25,7 +42,7 @@ public class CodeGAgent : GAgentBase<CodeGAgentState, CodeAgentGEvent>, ICodeGAg
 
     public async Task UploadCodeAsync(string webhookId, string version, byte[] codeBytes)
     {
-        var addCodeAgentGEvent  = new AddCodeAgentGEvent
+        var addCodeAgentGEvent = new AddCodeAgentGEvent
         {
             Ctime = DateTime.UtcNow,
             WebhookId = webhookId,

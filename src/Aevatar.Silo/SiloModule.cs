@@ -2,6 +2,7 @@ using AElf.OpenTelemetry;
 using Aevatar.Domain.Grains;
 using Microsoft.Extensions.DependencyInjection;
 using Aevatar.Application.Grains;
+using Aevatar.Core;
 using Aevatar.GAgents.AI.Options;
 using Aevatar.Options;
 using Microsoft.CodeAnalysis.Options;
@@ -40,6 +41,7 @@ public class SiloModule : AIApplicationGrainsModule, IDomainGrainsModule
         });
         context.Services.Configure<HostOptions>(context.Services.GetConfiguration().GetSection("Host"));
         context.Services.Configure<SystemLLMConfigOptions>(configuration);
+        context.Services.AddSingleton<IGAgentConsumerFactory, GAgentConsumerFactory>();
     }
     
     
