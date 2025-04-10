@@ -7,6 +7,7 @@ using Aevatar.GAgents.AI.Options;
 using Aevatar.Options;
 using Microsoft.CodeAnalysis.Options;
 using Aevatar.PermissionManagement;
+using Aevatar.TracedStreamProcessing;
 using Serilog;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
@@ -31,18 +32,13 @@ public class SiloModule : AIApplicationGrainsModule, IDomainGrainsModule
         context.Services.AddHostedService<AevatarHostedService>();
         var configuration = context.Services.GetConfiguration();
         //add dependencies here
-        context.Services.AddSerilog(loggerConfiguration => {},
+        context.Services.AddSerilog(loggerConfiguration => { },
             true, writeToProviders: true);
         context.Services.AddHttpClient();
         context.Services.AddSignalR().AddOrleans();
-        Configure<PermissionManagementOptions>(options =>
-        {
-            options.IsDynamicPermissionStoreEnabled = true;
-        });
+        Configure<PermissionManagementOptions>(options => { options.IsDynamicPermissionStoreEnabled = true; });
         context.Services.Configure<HostOptions>(context.Services.GetConfiguration().GetSection("Host"));
         context.Services.Configure<SystemLLMConfigOptions>(configuration);
-        context.Services.AddSingleton<IGAgentConsumerFactory, GAgentConsumerFactory>();
+        context.Services.AddSingleton<IGAgentConsumerFactory, TracedGAgentConsumerFactory>();
     }
-    
-    
 }

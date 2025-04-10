@@ -1,9 +1,12 @@
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Aevatar.Silo.Extensions;
 using Serilog;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using System;
+using System.Threading.Tasks;
 
 namespace Aevatar.Silo;
 
@@ -41,8 +44,28 @@ public class Program
 
     internal static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
-            .ConfigureServices((hostcontext, services) =>
+            .ConfigureServices((hostContext, services) =>
             {
+                // Configure OpenTelemetry
+                services.AddOpenTelemetry()
+                    .WithTracing(builder =>
+                    {
+                        builder
+                            .AddSource("Aevatar.TracedStreamProcessing") // Add your ActivitySource
+                            // .AddSource("Aevatar.Silo") // Add Silo's ActivitySource
+                            // .SetResourceBuilder(ResourceBuilder
+                            //     .CreateDefault()
+                            //     .AddService("Aevatar.Silo"))
+                            // Orleans instrumentation - directly include Orleans activity sources
+                            // .AddSource("Orleans.Runtime")
+                            // .AddSource("Orleans.Messaging")
+                            // .AddSource("Microsoft.Orleans")
+                            .AddAspNetCoreInstrumentation()
+                            .AddHttpClientInstrumentation()
+                            // Add console exporter for debugging
+                            .AddConsoleExporter();
+                    });
+
                 services.AddApplication<SiloModule>();
             })
             .UseOrleansConfiguration()
