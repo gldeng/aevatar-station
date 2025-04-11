@@ -6,6 +6,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System;
+using System.Diagnostics;
 
 namespace Aevatar.Silo.Extensions;
 
@@ -13,7 +14,8 @@ public static class OpenTelemetryExtensions
 {
     public const string DefaultCollectorEndpoint = "http://localhost:4315";
 
-    public static IServiceCollection AddAevatarOpenTelemetry(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddAevatarOpenTelemetry(this IServiceCollection services,
+        IConfiguration configuration)
     {
         var serviceName = configuration["OpenTelemetry:ServiceName"] ?? "Aevatar.Silo";
         var serviceVersion = configuration["OpenTelemetry:ServiceVersion"] ?? "1.0";
@@ -23,15 +25,22 @@ public static class OpenTelemetryExtensions
             .ConfigureResource(resource => resource.AddService(
                 serviceName: serviceName,
                 serviceVersion: serviceVersion))
-            .WithTracing(tracing => tracing
-                .AddSource(serviceName)
-                .AddSource("Aevatar.TracedStreamProcessing")
-                .AddSource("Orleans.Runtime")
-                .AddSource("Orleans.Messaging")
-                .AddSource("Microsoft.Orleans")
-                .AddAspNetCoreInstrumentation()
-                .AddHttpClientInstrumentation()
-                .AddOtlpExporter(exporter => exporter.Endpoint = new Uri(endpoint)))
+            .WithTracing(tracing =>
+            {
+                tracing.SetSampler(new AlwaysOnSampler())
+                    .AddSource(serviceName)
+                    .AddSource("Aevatar.Messaging") // Make sure this matches the source name exactly
+                    .AddSource("Orleans.Runtime")
+                    .AddSource("Orleans.Messaging")
+                    .AddSource("Microsoft.Orleans")
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddConsoleExporter() // Add console exporter for debugging
+                    .AddOtlpExporter(exporter =>
+                    {
+                        exporter.Endpoint = new Uri(endpoint);
+                    });
+            })
             .WithMetrics(metrics => metrics
                 .AddHttpClientInstrumentation()
                 .AddAspNetCoreInstrumentation()
@@ -59,4 +68,4 @@ public static class OpenTelemetryExtensions
                 .AddOtlpExporter(exporter => exporter.Endpoint = new Uri(endpoint));
         });
     }
-} 
+}

@@ -8,6 +8,7 @@ using Aevatar.Options;
 using Microsoft.CodeAnalysis.Options;
 using Aevatar.PermissionManagement;
 using Aevatar.TracedStreamProcessing;
+using Aevatar.Silo.Extensions;
 using Serilog;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
