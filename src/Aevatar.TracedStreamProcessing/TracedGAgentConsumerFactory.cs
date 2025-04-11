@@ -6,8 +6,8 @@ namespace Aevatar.TracedStreamProcessing;
 
 public class TracedGAgentConsumerFactory : IGAgentConsumerFactory
 {
-    public IAsyncObserver<EventWrapperBase> CreateConsumer(IReadOnlyList<EventWrapperBaseAsyncObserver> observers)
+    public IAsyncObserver<EventWrapperBase> CreateConsumer(IReadOnlyList<EventWrapperBaseAsyncObserver> observers, string consumerId)
     {
-        return new TracedGAgentAsyncObserver(observers.ToList());
+        return new TracedGAgentAsyncObserver(observers.ToList(), consumerId);
     }
 }

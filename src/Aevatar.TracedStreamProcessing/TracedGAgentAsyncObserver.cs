@@ -8,13 +8,16 @@ namespace Aevatar.TracedStreamProcessing;
 public class TracedGAgentAsyncObserver : GAgentAsyncObserver, IAsyncObserver<EventWrapperBase>
 {
     private static readonly ActivitySource ActivitySource = new ActivitySource("Aevatar.Messaging");
+    private readonly string _consumerId;
 
-    public TracedGAgentAsyncObserver(List<EventWrapperBaseAsyncObserver> observers) : base(observers)
+    public TracedGAgentAsyncObserver(List<EventWrapperBaseAsyncObserver> observers, string consumerId) : base(observers)
     {
+        _consumerId = consumerId;
     }
 
     public async Task OnNextAsync(EventWrapperBase item, StreamSequenceToken? token = null)
     {
+        
         // Extract the actual event for better naming and context
         var eventProperty = item.GetType().GetProperty("Event");
         var eventObj = eventProperty?.GetValue((object)item) as EventBase;
@@ -29,6 +32,7 @@ public class TracedGAgentAsyncObserver : GAgentAsyncObserver, IAsyncObserver<Eve
         activity?.SetTag("event.type", eventTypeName);
         activity?.SetTag("event.correlation_id", eventObj?.CorrelationId);
         activity?.SetTag("event.publisher_grain_id", eventObj?.PublisherGrainId);
+        activity?.SetTag("event.consumer_grain_id", _consumerId);
         activity?.SetTag("stream.sequence_number", token?.SequenceNumber.ToString());
 
         // Add more descriptive tags
