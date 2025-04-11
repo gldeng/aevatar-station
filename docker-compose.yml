@@ -85,7 +85,7 @@ services:
       - COLLECTOR_OTLP_ENABLED=true
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.88.0
     container_name: otel-collector
     networks:
       - aevatar-network
@@ -98,9 +98,44 @@ services:
     depends_on:
       - jaeger
 
+  # Add a proper Prometheus server
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    networks:
+      - aevatar-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9091:9090"  # Using 9091 on host to avoid conflict with otel-collector
+    depends_on:
+      - otel-collector
+
+  # Add Grafana for better visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    networks:
+      - aevatar-network
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
 volumes:
   mongodb-data:
   redis-data:
   kafka-data:
   elasticsearch-data:
   qdrant-data:
+  prometheus-data:
+  grafana-data:

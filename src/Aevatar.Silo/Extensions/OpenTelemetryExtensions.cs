@@ -45,6 +45,7 @@ public static class OpenTelemetryExtensions
                 .AddHttpClientInstrumentation()
                 .AddAspNetCoreInstrumentation()
                 .AddMeter("Microsoft.Orleans")
+                .AddMeter("Aevatar.Messaging")
                 .AddMeter(serviceName)
                 .AddOtlpExporter(exporter => exporter.Endpoint = new Uri(endpoint)))
             .Services;

@@ -19,14 +19,22 @@ public class TracedGAgentAsyncObserver : GAgentAsyncObserver, IAsyncObserver<Eve
         var eventProperty = item.GetType().GetProperty("Event");
         var eventObj = eventProperty?.GetValue((object)item) as EventBase;
         var eventTypeName = eventObj?.GetType().FullName ?? "UnknownEvent";
+        
+        // Create a more metrics-friendly version of the type name
+        var shortEventTypeName = eventObj?.GetType().Name ?? "UnknownEvent";
 
+        // Use attributes in the activity name to ensure they'll be captured in metrics
         using var activity = ActivitySource.StartActivity(
-            $"ProcessNextGrainEvent/{eventTypeName}",
+            $"ProcessNextGrainEvent/{shortEventTypeName}",
             ActivityKind.Internal);
 
         // Add event details to the activity
-        // TODO: Should we add grain id
         activity?.SetTag("event.type", eventTypeName);
+        activity?.SetTag("event.type.short", shortEventTypeName);
+        
+        // Explicitly set operation with the pattern we want to query in metrics
+        activity?.SetTag("operation", $"ProcessNextGrainEvent/{shortEventTypeName}");
+        
         activity?.SetTag("event.correlationid", eventObj?.CorrelationId);
         activity?.SetTag("event.publishergrainid", eventObj?.PublisherGrainId);
         activity?.SetTag("stream.sequencenumber", token?.SequenceNumber.ToString());
@@ -45,14 +53,17 @@ public class TracedGAgentAsyncObserver : GAgentAsyncObserver, IAsyncObserver<Eve
             }
 
             var elapsed = Stopwatch.GetElapsedTime(startTime);
-            activity?.SetTag("event.processing.time_ms", elapsed.TotalMilliseconds);
+            var processingTimeMs = elapsed.TotalMilliseconds;
+            
+            // Record the processing time as a span attribute
+            activity?.SetTag("event.processing.time_ms", processingTimeMs);
 
             // Add performance categorization tag
-            if (elapsed.TotalMilliseconds > 1000)
+            if (processingTimeMs > 1000)
             {
                 activity?.SetTag("performance.category", "slow");
             }
-            else if (elapsed.TotalMilliseconds > 300)
+            else if (processingTimeMs > 300)
             {
                 activity?.SetTag("performance.category", "medium");
             }
