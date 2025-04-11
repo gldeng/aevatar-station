@@ -7,6 +7,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Aevatar.Silo;
 
@@ -47,28 +48,30 @@ public class Program
             .ConfigureServices((hostContext, services) =>
             {
                 // Configure OpenTelemetry
-                services.AddOpenTelemetry()
-                    .WithTracing(builder =>
-                    {
-                        builder
-                            .AddSource("Aevatar.TracedStreamProcessing") // Add your ActivitySource
-                            // .AddSource("Aevatar.Silo") // Add Silo's ActivitySource
-                            // .SetResourceBuilder(ResourceBuilder
-                            //     .CreateDefault()
-                            //     .AddService("Aevatar.Silo"))
-                            // Orleans instrumentation - directly include Orleans activity sources
-                            // .AddSource("Orleans.Runtime")
-                            // .AddSource("Orleans.Messaging")
-                            // .AddSource("Microsoft.Orleans")
-                            .AddAspNetCoreInstrumentation()
-                            .AddHttpClientInstrumentation()
-                            // Add console exporter for debugging
-                            .AddConsoleExporter();
-                    });
-
+                services.AddAevatarOpenTelemetry(hostContext.Configuration);
                 services.AddApplication<SiloModule>();
             })
             .UseOrleansConfiguration()
             .UseAutofac()
-            .UseSerilog();
+            .UseSerilog((context, configuration) =>
+            {
+                configuration
+                    .ReadFrom.Configuration(context.Configuration)
+                    .Enrich.FromLogContext();
+
+                // Add OpenTelemetry logging support
+                configuration.WriteTo.OpenTelemetry(options =>
+                {
+                    var serviceName = context.Configuration["OpenTelemetry:ServiceName"] ?? "Aevatar.Silo";
+                    var serviceVersion = context.Configuration["OpenTelemetry:ServiceVersion"] ?? "1.0";
+                    var endpoint = context.Configuration["OpenTelemetry:CollectorEndpoint"] ?? OpenTelemetryExtensions.DefaultCollectorEndpoint;
+                    
+                    options.Endpoint = endpoint;
+                    options.ResourceAttributes = new Dictionary<string, object>
+                    {
+                        ["service.name"] = serviceName,
+                        ["service.version"] = serviceVersion
+                    };
+                });
+            });
 }
