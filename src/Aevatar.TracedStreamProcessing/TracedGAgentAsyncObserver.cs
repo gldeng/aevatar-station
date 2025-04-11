@@ -2,11 +2,10 @@
 using Aevatar.Core.Abstractions;
 using Orleans.Streams;
 using System.Diagnostics;
-using System;
 
 namespace Aevatar.TracedStreamProcessing;
 
-public  class TracedGAgentAsyncObserver : GAgentAsyncObserver, IAsyncObserver<EventWrapperBase>
+public class TracedGAgentAsyncObserver : GAgentAsyncObserver, IAsyncObserver<EventWrapperBase>
 {
     private static readonly ActivitySource ActivitySource = new ActivitySource("Aevatar.TracedStreamProcessing");
 
@@ -22,8 +21,8 @@ public  class TracedGAgentAsyncObserver : GAgentAsyncObserver, IAsyncObserver<Ev
         var eventType = (EventBase) item.GetType().GetProperty("Event")?.GetValue((object) item);
         // Add event details to the activity
         activity?.SetTag("event.type", item.GetType().FullName);
-        activity?.SetTag("event.correlationid", eventType?.CorrelationId);
-        activity?.SetTag("event.publishergrainid", eventType?.PublisherGrainId);
+        activity?.SetTag("event.correlationid", eventType.CorrelationId);
+        activity?.SetTag("event.PublisherGrainId", eventType.PublisherGrainId);
         activity?.SetTag("stream.token", token?.ToString());
             
         try
