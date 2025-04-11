@@ -27,42 +27,16 @@ public class TracedGAgentAsyncObserver : GAgentAsyncObserver, IAsyncObserver<Eve
 
         // Add event details to the activity
         activity?.SetTag("event.type", eventTypeName);
-        activity?.SetTag("event.correlationid", eventObj?.CorrelationId);
-        activity?.SetTag("event.publishergrainid", eventObj?.PublisherGrainId);
-        activity?.SetTag("stream.sequencenumber", token?.SequenceNumber.ToString());
+        activity?.SetTag("event.correlation_id", eventObj?.CorrelationId);
+        activity?.SetTag("event.publisher_grain_id", eventObj?.PublisherGrainId);
+        activity?.SetTag("stream.sequence_number", token?.SequenceNumber.ToString());
 
         // Add more descriptive tags
         activity?.SetTag("event.timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
         try
         {
-            var startTime = Stopwatch.GetTimestamp();
-
-            // Consider wrapping in another activity for more detailed tracing
-            using (activity?.Source.StartActivity("CoreEventProcessing"))
-            {
-                await base.OnNextAsync(item, token);
-            }
-
-            var elapsed = Stopwatch.GetElapsedTime(startTime);
-            var processingTimeMs = elapsed.TotalMilliseconds;
-            
-            // Record the processing time as a span attribute
-            activity?.SetTag("event.processing.time_ms", processingTimeMs);
-
-            // Add performance categorization tag
-            if (processingTimeMs > 1000)
-            {
-                activity?.SetTag("performance.category", "slow");
-            }
-            else if (processingTimeMs > 300)
-            {
-                activity?.SetTag("performance.category", "medium");
-            }
-            else
-            {
-                activity?.SetTag("performance.category", "fast");
-            }
+            await base.OnNextAsync(item, token);
         }
         catch (Exception ex)
         {
