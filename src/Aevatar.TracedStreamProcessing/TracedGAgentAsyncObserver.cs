@@ -19,22 +19,14 @@ public class TracedGAgentAsyncObserver : GAgentAsyncObserver, IAsyncObserver<Eve
         var eventProperty = item.GetType().GetProperty("Event");
         var eventObj = eventProperty?.GetValue((object)item) as EventBase;
         var eventTypeName = eventObj?.GetType().FullName ?? "UnknownEvent";
-        
-        // Create a more metrics-friendly version of the type name
-        var shortEventTypeName = eventObj?.GetType().Name ?? "UnknownEvent";
 
         // Use attributes in the activity name to ensure they'll be captured in metrics
         using var activity = ActivitySource.StartActivity(
-            $"ProcessNextGrainEvent/{shortEventTypeName}",
+            $"ProcessNextGrainEvent/{eventTypeName}",
             ActivityKind.Internal);
 
         // Add event details to the activity
         activity?.SetTag("event.type", eventTypeName);
-        activity?.SetTag("event.type.short", shortEventTypeName);
-        
-        // Explicitly set operation with the pattern we want to query in metrics
-        activity?.SetTag("operation", $"ProcessNextGrainEvent/{shortEventTypeName}");
-        
         activity?.SetTag("event.correlationid", eventObj?.CorrelationId);
         activity?.SetTag("event.publishergrainid", eventObj?.PublisherGrainId);
         activity?.SetTag("stream.sequencenumber", token?.SequenceNumber.ToString());
