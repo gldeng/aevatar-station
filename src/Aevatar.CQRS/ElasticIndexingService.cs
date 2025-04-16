@@ -99,7 +99,6 @@ public class ElasticIndexingService : IIndexingService, ISingletonDependency
                         if (propType == typeof(string))
                         {
                             props.Text(propertyName);
-                            props.Keyword(propertyName, k => k.IgnoreAbove(256));
                         }
                         else if (propType == typeof(short) || propType == typeof(int) || propType == typeof(long))
                         {
